@@ -27,8 +27,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 val ClipCutYellow = Color(0xFFFFD700)
-val DarkBg = Color(0xFF0A0A0A)
-val CardBg = Color(0xFF161616)
+val ClipCutYellowLight = Color(0xFFFFF066)
+val DarkBg = Color(0xFF0F0F0F)
+val CardBg = Color(0xFF1C1C1E)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -67,56 +68,86 @@ fun ClipCutApp() {
 @Composable
 fun HomeScreen(onNewProject: () -> Unit, onOpenPaywall: () -> Unit) {
     val context = LocalContext.current
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Text("ClipCut", fontSize = 26.sp, fontWeight = FontWeight.Black, color = Color.White)
-                Text("BY NOVATRISTUDIO", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = ClipCutYellow)
-            }
-            Button(
-                onClick = onOpenPaywall,
-                colors = ButtonDefaults.buttonColors(containerColor = ClipCutYellow),
-                shape = RoundedCornerShape(20.dp)
-            ) {
-                Text("★ PRO", color = Color.Black, fontWeight = FontWeight.Black)
-            }
-        }
-
-        Card(
-            modifier = Modifier.fillMaxWidth().height(120.dp).clickable { onNewProject() },
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = ClipCutYellow)
+    Column(modifier = Modifier.fillMaxSize()) {
+        // ENCABEZADO AMARILLO VIBRANTE
+        Surface(
+            color = ClipCutYellow,
+            modifier = Modifier.fillMaxWidth()
         ) {
             Row(
-                modifier = Modifier.fillMaxSize().padding(20.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
-                    Text("+ Nuevo Proyecto", fontSize = 20.sp, fontWeight = FontWeight.Black, color = Color.Black)
-                    Text("Multipista 4K / 60FPS", fontSize = 12.sp, color = Color.Black.copy(0.8f))
+                    Text("ClipCut", fontSize = 28.sp, fontWeight = FontWeight.Black, color = Color.Black)
+                    Text("BY NOVATRISTUDIO", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.Black.copy(0.7f))
                 }
-                Icon(Icons.Default.AddCircle, null, tint = Color.Black, modifier = Modifier.size(36.dp))
+                Button(
+                    onClick = onOpenPaywall,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
+                    shape = RoundedCornerShape(20.dp)
+                ) {
+                    Text("★ PRO", color = ClipCutYellow, fontWeight = FontWeight.Black)
+                }
             }
         }
 
-        Spacer(modifier = Modifier.height(20.dp))
-        Text("CREACIÓN RÁPIDA", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
-        Spacer(modifier = Modifier.height(8.dp))
+        Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+            // TARJETA PRINCIPAL AMARILLA
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(130.dp)
+                    .clickable { onNewProject() },
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = ClipCutYellow)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxSize().padding(22.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text("+ Nuevo Proyecto", fontSize = 22.sp, fontWeight = FontWeight.Black, color = Color.Black)
+                        Text("Línea Multipista 4K / 60FPS", fontSize = 13.sp, color = Color.Black.copy(0.8f))
+                    }
+                    Icon(Icons.Default.AddCircle, null, tint = Color.Black, modifier = Modifier.size(44.dp))
+                }
+            }
 
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            QuickBox("Editar Foto", Icons.Default.Image, Modifier.weight(1f)) {
-                Toast.makeText(context, "Editor de Fotos ClipCut", Toast.LENGTH_SHORT).show()
+            Spacer(modifier = Modifier.height(24.dp))
+            Text("HERRAMIENTAS CLIPCUT", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = ClipCutYellow)
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                QuickBox("Editar Foto", Icons.Default.Image, Modifier.weight(1f)) {
+                    Toast.makeText(context, "Editor de Fotos ClipCut", Toast.LENGTH_SHORT).show()
+                }
+                QuickBox("Lab IA", Icons.Default.AutoAwesome, Modifier.weight(1f)) {
+                    Toast.makeText(context, "Laboratorio IA (Texto a Video)", Toast.LENGTH_SHORT).show()
+                }
+                QuickBox("Cámara Pro", Icons.Default.Videocam, Modifier.weight(1f)) {
+                    Toast.makeText(context, "Cámara 4K HDR", Toast.LENGTH_SHORT).show()
+                }
             }
-            QuickBox("Lab IA", Icons.Default.AutoAwesome, Modifier.weight(1f)) {
-                Toast.makeText(context, "Laboratorio IA (Texto a Video)", Toast.LENGTH_SHORT).show()
-            }
-            QuickBox("Cámara Pro", Icons.Default.Videocam, Modifier.weight(1f)) {
-                Toast.makeText(context, "Cámara 4K HDR", Toast.LENGTH_SHORT).show()
+
+            Spacer(modifier = Modifier.height(24.dp))
+            Text("PROYECTOS RECIENTES", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = ClipCutYellow)
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(CardBg)
+                    .border(1.dp, ClipCutYellow.copy(0.3f), RoundedCornerShape(16.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("Toca en '+ Nuevo Proyecto' para editar tu primer video.", color = Color.Gray, fontSize = 13.sp)
             }
         }
     }
@@ -125,8 +156,11 @@ fun HomeScreen(onNewProject: () -> Unit, onOpenPaywall: () -> Unit) {
 @Composable
 fun QuickBox(title: String, icon: ImageVector, modifier: Modifier, onClick: () -> Unit) {
     Card(
-        modifier = modifier.height(80.dp).clickable { onClick() },
-        shape = RoundedCornerShape(12.dp),
+        modifier = modifier
+            .height(90.dp)
+            .clickable { onClick() }
+            .border(1.dp, ClipCutYellow.copy(0.4f), RoundedCornerShape(14.dp)),
+        shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = CardBg)
     ) {
         Column(
@@ -134,8 +168,8 @@ fun QuickBox(title: String, icon: ImageVector, modifier: Modifier, onClick: () -
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Icon(icon, null, tint = ClipCutYellow, modifier = Modifier.size(24.dp))
-            Spacer(modifier = Modifier.height(4.dp))
+            Icon(icon, null, tint = ClipCutYellow, modifier = Modifier.size(28.dp))
+            Spacer(modifier = Modifier.height(6.dp))
             Text(title, fontSize = 11.sp, color = Color.White, fontWeight = FontWeight.Bold)
         }
     }
@@ -147,18 +181,21 @@ fun EditorScreen(onBack: () -> Unit, onExport: () -> Unit) {
 
     Column(modifier = Modifier.fillMaxSize()) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(12.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(ClipCutYellow)
+                .padding(horizontal = 16.dp, vertical = 10.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = onBack) { Icon(Icons.Default.Close, null, tint = Color.White) }
-            Text("ClipCut Studio", color = Color.White, fontWeight = FontWeight.Bold)
+            IconButton(onClick = onBack) { Icon(Icons.Default.Close, null, tint = Color.Black) }
+            Text("ClipCut Studio", color = Color.Black, fontWeight = FontWeight.Black, fontSize = 16.sp)
             Button(
                 onClick = onExport,
-                colors = ButtonDefaults.buttonColors(containerColor = ClipCutYellow),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
                 shape = RoundedCornerShape(20.dp)
             ) {
-                Text("Exportar", color = Color.Black, fontWeight = FontWeight.Bold)
+                Text("Exportar", color = ClipCutYellow, fontWeight = FontWeight.Bold)
             }
         }
 
@@ -166,35 +203,40 @@ fun EditorScreen(onBack: () -> Unit, onExport: () -> Unit) {
             modifier = Modifier.fillMaxWidth().weight(0.4f).background(Color.Black),
             contentAlignment = Alignment.Center
         ) {
-            Text("Previsualización 4K", color = Color.DarkGray)
+            Text("Previsualización 4K UHD", color = Color.DarkGray)
             IconButton(
                 onClick = { isPlaying = !isPlaying },
-                modifier = Modifier.size(48.dp).clip(CircleShape).background(Color.Black.copy(0.6f))
+                modifier = Modifier.size(54.dp).clip(CircleShape).background(Color.Black.copy(0.7f)).border(2.dp, ClipCutYellow, CircleShape)
             ) {
-                Icon(if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow, null, tint = ClipCutYellow)
+                Icon(if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow, null, tint = ClipCutYellow, modifier = Modifier.size(32.dp))
             }
         }
 
-        Column(modifier = Modifier.fillMaxWidth().weight(0.4f).background(Color(0xFF111111)).padding(8.dp)) {
+        Column(modifier = Modifier.fillMaxWidth().weight(0.4f).background(Color(0xFF141414)).padding(10.dp)) {
             TrackBar("Video 4K", ClipCutYellow)
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(6.dp))
             TrackBar("Audio / Voz", Color(0xFF00E5FF))
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(6.dp))
             TrackBar("Subtítulos IA", Color(0xFFFF007A))
         }
 
         Row(
-            modifier = Modifier.fillMaxWidth().height(65.dp).background(CardBg).horizontalScroll(rememberScrollState()),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(72.dp)
+                .background(CardBg)
+                .border(1.dp, ClipCutYellow.copy(0.2f))
+                .horizontalScroll(rememberScrollState()),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalArrangement = Arrangement.spacedBy(18.dp)
         ) {
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(10.dp))
             ToolBtn("Dividir", Icons.Default.ContentCut)
             ToolBtn("Velocidad", Icons.Default.Speed)
             ToolBtn("IA Fix", Icons.Default.AutoFixHigh)
             ToolBtn("Chroma", Icons.Default.ColorLens)
             ToolBtn("LUTs", Icons.Default.FilterVintage)
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(10.dp))
         }
     }
 }
@@ -202,70 +244,9 @@ fun EditorScreen(onBack: () -> Unit, onExport: () -> Unit) {
 @Composable
 fun TrackBar(label: String, color: Color) {
     Box(
-        modifier = Modifier.fillMaxWidth().height(30.dp).clip(RoundedCornerShape(6.dp))
-            .background(color.copy(0.2f)).border(1.dp, color, RoundedCornerShape(6.dp)).padding(horizontal = 8.dp),
-        contentAlignment = Alignment.CenterStart
-    ) {
-        Text(label, color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-    }
-}
-
-@Composable
-fun ToolBtn(title: String, icon: ImageVector) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Icon(icon, null, tint = Color.White, modifier = Modifier.size(20.dp))
-        Text(title, color = Color.LightGray, fontSize = 10.sp)
-    }
-}
-
-@Composable
-fun PaywallDialog(onDismiss: () -> Unit) {
-    val context = LocalContext.current
-    Box(
-        modifier = Modifier.fillMaxSize().background(Color.Black.copy(0.95f)).padding(24.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                IconButton(onClick = onDismiss) { Icon(Icons.Default.Close, null, tint = Color.White) }
-            }
-            Text("ClipCut PRO", fontSize = 26.sp, fontWeight = FontWeight.Black, color = ClipCutYellow)
-            Text("Exporta en 4K 60FPS sin marca de agua", fontSize = 12.sp, color = Color.LightGray)
-            Spacer(modifier = Modifier.height(20.dp))
-
-            PlanRow("Prueba VIP (7 Días)", "$20 MXN")
-            PlanRow("Plan Mensual", "$100 MXN")
-            PlanRow("Plan Anual (Mejor Opción)", "$1,000 MXN")
-
-            Spacer(modifier = Modifier.height(20.dp))
-            Button(
-                onClick = {
-                    Toast.makeText(context, "Conectando con Google Play Billing...", Toast.LENGTH_SHORT).show()
-                },
-                modifier = Modifier.fillMaxWidth().height(50.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = ClipCutYellow),
-                shape = RoundedCornerShape(14.dp)
-            ) {
-                Text("Continuar con Google Play", color = Color.Black, fontWeight = FontWeight.Bold)
-            }
-        }
-    }
-}
-
-@Composable
-fun PlanRow(title: String, price: String) {
-    Card(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = CardBg),
-        shape = RoundedCornerShape(10.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(14.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(title, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp)
-            Text(price, color = ClipCutYellow, fontWeight = FontWeight.Black, fontSize = 13.sp)
-        }
-    }
-}
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(34.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(color.copy(0.25f))
+            .border(1.5.dp, color, RoundedCornerShape(8.
