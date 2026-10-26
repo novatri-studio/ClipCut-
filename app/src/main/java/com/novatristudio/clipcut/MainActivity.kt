@@ -303,7 +303,7 @@ fun TrackBar(label: String, color: Color) {
             .background(color.copy(0.25f))
             .border(1.5.dp, color, RoundedCornerShape(8.dp))
             .padding(horizontal = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
+        contentAlignment = Alignment.CenterStart
     ) {
         Text(label, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
     }
