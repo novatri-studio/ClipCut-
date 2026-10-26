@@ -9,6 +9,9 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,13 +26,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 
-val ClipCutYellow = Color(0xFFFFD700)
-val ClipCutYellowLight = Color(0xFFFFF066)
-val DarkBg = Color(0xFF0F0F0F)
-val CardBg = Color(0xFF1C1C1E)
+// PALETA DE COLORES EXACTA A TUS CAPTURAS
+val ClipCutYellow = Color(0xFFEBB700)       // Amarillo principal de fondo
+val ClipCutYellowCard = Color(0xFFFFD53D)   // Amarillo claro para tarjetas y botones
+val DarkPaywallBg = Color(0xFF141414)       // Fondo negro del modal Pro
+val DarkCardBg = Color(0xFF1E1E1E)          // Tarjetas oscuras del modal Pro
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -45,7 +52,7 @@ fun ClipCutApp() {
     var currentScreen by remember { mutableStateOf("home") }
     var showPaywall by remember { mutableStateOf(false) }
 
-    Box(modifier = Modifier.fillMaxSize().background(DarkBg)) {
+    Box(modifier = Modifier.fillMaxSize().background(ClipCutYellow)) {
         Column(modifier = Modifier.fillMaxSize()) {
             when (currentScreen) {
                 "home" -> HomeScreen(
@@ -59,6 +66,7 @@ fun ClipCutApp() {
             }
         }
 
+        // MODAL DE SUSCRIPCIÓN PRO (COMO EN TU CAPTURA)
         if (showPaywall) {
             PaywallDialog(onDismiss = { showPaywall = false })
         }
@@ -68,109 +76,155 @@ fun ClipCutApp() {
 @Composable
 fun HomeScreen(onNewProject: () -> Unit, onOpenPaywall: () -> Unit) {
     val context = LocalContext.current
-    Column(modifier = Modifier.fillMaxSize()) {
-        // ENCABEZADO AMARILLO VIBRANTE
-        Surface(
-            color = ClipCutYellow,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text("ClipCut", fontSize = 28.sp, fontWeight = FontWeight.Black, color = Color.Black)
-                    Text("BY NOVATRISTUDIO", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.Black.copy(0.7f))
-                }
-                Button(
-                    onClick = onOpenPaywall,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
-                    shape = RoundedCornerShape(20.dp)
-                ) {
-                    Text("★ PRO", color = ClipCutYellow, fontWeight = FontWeight.Black)
-                }
-            }
-        }
+    var selectedTab by remember { mutableStateOf(0) }
 
-        Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-            // TARJETA PRINCIPAL AMARILLA
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(130.dp)
-                    .clickable { onNewProject() },
+    val tools = listOf(
+        Pair("AutoCut", Icons.Default.PlayCircle),
+        Pair("Retoque", Icons.Default.Face),
+        Pair("Generador de IA", Icons.Default.AutoAwesome),
+        Pair("Herramientas foto", Icons.Default.Image),
+        Pair("Disparar y grabar", Icons.Default.Videocam),
+        Pair("Mejorar auto", Icons.Default.AutoFixHigh),
+        Pair("Creador portadas", Icons.Default.Edit),
+        Pair("Subtítulos auto", Icons.Default.ClosedCaption),
+        Pair("Recortadora IA", Icons.Default.ContentCut),
+        Pair("Eliminar fondo", Icons.Default.Person),
+        Pair("Editor fotos IA", Icons.Default.PhotoFilter),
+        Pair("Espacio", Icons.Default.Cloud),
+        Pair("Ajustar velocidad", Icons.Default.Speed),
+        Pair("Herramientas mkt", Icons.Default.ShoppingBag),
+        Pair("Herramientas audio", Icons.Default.VolumeUp),
+        Pair("Avatares", Icons.Default.AccountCircle),
+        Pair("Multimedia", Icons.Default.Folder),
+        Pair("Todas (34)", Icons.Default.Apps)
+    )
+
+    Column(modifier = Modifier.fillMaxSize().background(ClipCutYellow)) {
+        // BARRA SUPERIOR
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Chip de prueba gratuita
+            Surface(
+                color = Color.White.copy(alpha = 0.85f),
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = ClipCutYellow)
+                modifier = Modifier.clickable { onOpenPaywall() }
             ) {
                 Row(
-                    modifier = Modifier.fillMaxSize().padding(22.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column {
-                        Text("+ Nuevo Proyecto", fontSize = 22.sp, fontWeight = FontWeight.Black, color = Color.Black)
-                        Text("Línea Multipista 4K / 60FPS", fontSize = 13.sp, color = Color.Black.copy(0.8f))
-                    }
-                    Icon(Icons.Default.AddCircle, null, tint = Color.Black, modifier = Modifier.size(44.dp))
+                    Text("💎 Prueba Standard 7 días por $0", fontSize = 12.sp, color = Color.Black, fontWeight = FontWeight.Bold)
                 }
             }
-
-            Spacer(modifier = Modifier.height(24.dp))
-            Text("HERRAMIENTAS CLIPCUT", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = ClipCutYellow)
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                QuickBox("Editar Foto", Icons.Default.Image, Modifier.weight(1f)) {
-                    Toast.makeText(context, "Editor de Fotos ClipCut", Toast.LENGTH_SHORT).show()
-                }
-                QuickBox("Lab IA", Icons.Default.AutoAwesome, Modifier.weight(1f)) {
-                    Toast.makeText(context, "Laboratorio IA (Texto a Video)", Toast.LENGTH_SHORT).show()
-                }
-                QuickBox("Cámara Pro", Icons.Default.Videocam, Modifier.weight(1f)) {
-                    Toast.makeText(context, "Cámara 4K HDR", Toast.LENGTH_SHORT).show()
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-            Text("PROYECTOS RECIENTES", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = ClipCutYellow)
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(CardBg)
-                    .border(1.dp, ClipCutYellow.copy(0.3f), RoundedCornerShape(16.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("Toca en '+ Nuevo Proyecto' para editar tu primer video.", color = Color.Gray, fontSize = 13.sp)
+            IconButton(onClick = {}) {
+                Icon(Icons.Default.Search, contentDescription = null, tint = Color.Black)
             }
         }
-    }
-}
 
-@Composable
-fun QuickBox(title: String, icon: ImageVector, modifier: Modifier, onClick: () -> Unit) {
-    Card(
-        modifier = modifier
-            .height(90.dp)
-            .clickable { onClick() }
-            .border(1.dp, ClipCutYellow.copy(0.4f), RoundedCornerShape(14.dp)),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = CardBg)
-    ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+        // TÍTULO
+        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+            Text("Video create", fontSize = 14.sp, color = Color.Black.copy(0.7f), fontWeight = FontWeight.Medium)
+            Text("Get started ›", fontSize = 26.sp, color = Color.Black, fontWeight = FontWeight.Black)
+        }
+
+        // BOTONES GRANDES PRINCIPALES
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Icon(icon, null, tint = ClipCutYellow, modifier = Modifier.size(28.dp))
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(title, fontSize = 11.sp, color = Color.White, fontWeight = FontWeight.Bold)
+            // Botón Video Nuevo
+            Card(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(90.dp)
+                    .clickable { onNewProject() },
+                colors = CardDefaults.cardColors(containerColor = ClipCutYellowCard),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(Icons.Default.Add, null, tint = Color.Black, modifier = Modifier.size(28.dp))
+                    Text("Video nuevo", fontWeight = FontWeight.Bold, color = Color.Black, fontSize = 14.sp)
+                }
+            }
+
+            // Botón Editar Foto
+            Card(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(90.dp)
+                    .clickable { Toast.makeText(context, "Editor de fotos", Toast.LENGTH_SHORT).show() },
+                colors = CardDefaults.cardColors(containerColor = ClipCutYellowCard),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(Icons.Default.Image, null, tint = Color.Black, modifier = Modifier.size(28.dp))
+                    Text("Editar foto", fontWeight = FontWeight.Bold, color = Color.Black, fontSize = 14.sp)
+                }
+            }
+        }
+
+        // CUADRÍCULA DE HERRAMIENTAS
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(3),
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp),
+            contentPadding = PaddingValues(vertical = 12.dp)
+        ) {
+            items(tools) { (title, icon) ->
+                Column(
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .clickable { Toast.makeText(context, title, Toast.LENGTH_SHORT).show() },
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(icon, null, tint = Color.Black, modifier = Modifier.size(32.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        title,
+                        fontSize = 11.sp,
+                        color = Color.Black,
+                        fontWeight = FontWeight.Medium,
+                        textAlign = TextAlign.Center,
+                        maxLines = 2
+                    )
+                }
+            }
+        }
+
+        // BARRA DE NAVEGACIÓN INFERIOR
+        NavigationBar(
+            containerColor = ClipCutYellow,
+            tonalElevation = 0.dp
+        ) {
+            val items = listOf("Ediciones" to Icons.Default.ContentCut, "Plantillas" to Icons.Default.Layers, "Lab. de IA" to Icons.Default.AutoAwesome, "Biblioteca" to Icons.Default.Folder, "Yo" to Icons.Default.Person)
+            items.forEachIndexed { index, (label, icon) ->
+                NavigationBarItem(
+                    selected = selectedTab == index,
+                    onClick = { selectedTab = index },
+                    icon = { Icon(icon, null, tint = Color.Black) },
+                    label = { Text(label, color = Color.Black, fontSize = 10.sp, fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal) },
+                    colors = NavigationBarItemDefaults.colors(
+                        indicatorColor = ClipCutYellowCard
+                    )
+                )
+            }
         }
     }
 }
@@ -179,7 +233,8 @@ fun QuickBox(title: String, icon: ImageVector, modifier: Modifier, onClick: () -
 fun EditorScreen(onBack: () -> Unit, onExport: () -> Unit) {
     var isPlaying by remember { mutableStateOf(false) }
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+        // ENCABEZADO DEL EDITOR
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -199,20 +254,26 @@ fun EditorScreen(onBack: () -> Unit, onExport: () -> Unit) {
             }
         }
 
+        // PREVIEW DE VIDEO
         Box(
-            modifier = Modifier.fillMaxWidth().weight(0.4f).background(Color.Black),
+            modifier = Modifier.fillMaxWidth().weight(0.5f).background(Color.Black),
             contentAlignment = Alignment.Center
         ) {
             Text("Previsualización 4K UHD", color = Color.DarkGray)
             IconButton(
                 onClick = { isPlaying = !isPlaying },
-                modifier = Modifier.size(54.dp).clip(CircleShape).background(Color.Black.copy(0.7f)).border(2.dp, ClipCutYellow, CircleShape)
+                modifier = Modifier
+                    .size(54.dp)
+                    .clip(CircleShape)
+                    .background(Color.Black.copy(0.7f))
+                    .border(2.dp, ClipCutYellow, CircleShape)
             ) {
                 Icon(if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow, null, tint = ClipCutYellow, modifier = Modifier.size(32.dp))
             }
         }
 
-        Column(modifier = Modifier.fillMaxWidth().weight(0.4f).background(Color(0xFF141414)).padding(10.dp)) {
+        // PISTAS MULTIMEDIA
+        Column(modifier = Modifier.fillMaxWidth().weight(0.35f).background(Color(0xFF141414)).padding(10.dp)) {
             TrackBar("Video 4K", ClipCutYellow)
             Spacer(modifier = Modifier.height(6.dp))
             TrackBar("Audio / Voz", Color(0xFF00E5FF))
@@ -220,11 +281,12 @@ fun EditorScreen(onBack: () -> Unit, onExport: () -> Unit) {
             TrackBar("Subtítulos IA", Color(0xFFFF007A))
         }
 
+        // BOTONES DE HERRAMIENTAS
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(72.dp)
-                .background(CardBg)
+                .background(Color(0xFF1C1C1E))
                 .border(1.dp, ClipCutYellow.copy(0.2f))
                 .horizontalScroll(rememberScrollState()),
             verticalAlignment = Alignment.CenterVertically,
@@ -249,4 +311,160 @@ fun TrackBar(label: String, color: Color) {
             .height(34.dp)
             .clip(RoundedCornerShape(8.dp))
             .background(color.copy(0.25f))
-            .border(1.5.dp, color, RoundedCornerShape(8.
+            .border(1.5.dp, color, RoundedCornerShape(8.dp))
+            .padding(horizontal = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(label, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+    }
+}
+
+@Composable
+fun ToolBtn(title: String, icon: ImageVector) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.clickable { }
+    ) {
+        Icon(icon, null, tint = ClipCutYellow, modifier = Modifier.size(24.dp))
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(title, color = Color.White, fontSize = 11.sp)
+    }
+}
+
+// MODAL EXACTO A TU CAPTURA DE PAGO CLIPCUT PRO
+@Composable
+fun PaywallDialog(onDismiss: () -> Unit) {
+    var selectedPlan by remember { mutableStateOf("anual") }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(DarkPaywallBg)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(20.dp)
+            ) {
+                // Botón Cerrar
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    IconButton(onClick = onDismiss) {
+                        Icon(Icons.Default.Close, null, tint = Color.White)
+                    }
+                }
+
+                // Encabezado Pro
+                Surface(
+                    color = ClipCutYellow,
+                    shape = RoundedCornerShape(6.dp)
+                ) {
+                    Text(
+                        " CLIPCUT PRO ",
+                        color = Color.Black,
+                        fontWeight = FontWeight.Black,
+                        fontSize = 11.sp,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    "Desbloquea Todo el Potencial de Edición",
+                    color = Color.White,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    "Sin marcas de agua, exportación en 4K Ultra HD a 60 FPS, subtítulos ilimitados con IA y biblioteca completa.",
+                    color = Color.Gray,
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // Planes de Pago
+                PlanCard(
+                    title = "Prueba de 7 Días",
+                    price = "$20 MXN",
+                    desc = "por 7 días",
+                    isSelected = selectedPlan == "prueba",
+                    onClick = { selectedPlan = "prueba" }
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                PlanCard(
+                    title = "Plan Mensual Pro",
+                    price = "$100 MXN",
+                    desc = "al mes",
+                    isSelected = selectedPlan == "mensual",
+                    onClick = { selectedPlan = "mensual" }
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                PlanCard(
+                    title = "Plan Anual Premium",
+                    price = "$1,000 MXN",
+                    desc = "al año (Ahorra 17%)",
+                    badge = "MÁS POPULAR",
+                    isSelected = selectedPlan == "anual",
+                    onClick = { selectedPlan = "anual" }
+                )
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                // Botón de pago
+                Button(
+                    onClick = onDismiss,
+                    colors = ButtonDefaults.buttonColors(containerColor = ClipCutYellow),
+                    shape = RoundedCornerShape(25.dp),
+                    modifier = Modifier.fillMaxWidth().height(52.dp)
+                ) {
+                    Icon(Icons.Default.Bolt, null, tint = Color.Black)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Suscribirse con Google Play", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun PlanCard(title: String, price: String, desc: String, badge: String? = null, isSelected: Boolean, onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .border(
+                width = if (isSelected) 2.dp else 1.dp,
+                color = if (isSelected) ClipCutYellow else Color.DarkGray,
+                shape = RoundedCornerShape(14.dp)
+            ),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = DarkCardBg)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            if (badge != null) {
+                Surface(color = ClipCutYellow, shape = RoundedCornerShape(4.dp)) {
+                    Text(" $badge ", color = Color.Black, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+            }
+            Text(title, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(price, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black)
+                RadioButton(
+                    selected = isSelected,
+                    onClick = onClick,
+                    colors = RadioButtonDefaults.colors(selectedColor = ClipCutYellow, unselectedColor = Color.Gray)
+                )
+            }
+            Text(desc, color = Color.Gray, fontSize = 11.sp)
+        }
+    }
+}
