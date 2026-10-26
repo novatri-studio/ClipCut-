@@ -1,20 +1,25 @@
 package com.novatristudio.clipcut
 
+import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -22,6 +27,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -32,7 +38,10 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 
-val ClipCutYellow = Color(0xFFEBB700)
+// COLORES OFICIALES CLIPCUT
+val YellowGradient = Brush.verticalGradient(
+    colors = listOf(Color(0xFFC79500), Color(0xFFE5B000), Color(0xFFF7C815))
+)
 val ClipCutYellowCard = Color(0xFFFFD53D)
 val DarkPaywallBg = Color(0xFF141414)
 val DarkCardBg = Color(0xFF1E1E1E)
@@ -48,33 +57,279 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun ClipCutApp() {
-    var currentScreen by remember { mutableStateOf("home") }
-    var showPaywall by remember { mutableStateOf(false) }
+    var isLoggedIn by remember { mutableStateOf(false) }
+    var loggedUser by remember { mutableStateOf("Usuario ClipCut") }
+    var isProUser by remember { mutableStateOf(false) }
 
-    Box(modifier = Modifier.fillMaxSize().background(ClipCutYellow)) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            when (currentScreen) {
-                "home" -> HomeScreen(
-                    onNewProject = { currentScreen = "editor" },
-                    onOpenPaywall = { showPaywall = true }
+    var currentScreen by remember { mutableStateOf("home") } // "home" o "editor"
+    var currentTab by remember { mutableStateOf(0) }
+    var showPaywall by remember { mutableStateOf(false) }
+    var showSettings by remember { mutableStateOf(false) }
+    var selectedMediaUri by remember { mutableStateOf<Uri?>(null) }
+
+    // SI NO HA INICIADO SESIÓN -> PANTALLA DE LOGIN
+    if (!isLoggedIn) {
+        LoginScreen(
+            onLoginSuccess = { user ->
+                loggedUser = user
+                isLoggedIn = true
+            }
+        )
+        return
+    }
+
+    // SI YA INICIÓ SESIÓN -> APP COMPLETA
+    Box(modifier = Modifier.fillMaxSize().background(YellowGradient)) {
+        if (currentScreen == "editor") {
+            EditorScreen(
+                mediaUri = selectedMediaUri,
+                isPro = isProUser,
+                onBack = { currentScreen = "home" },
+                onExport = {
+                    if (!isProUser) showPaywall = true
+                }
+            )
+        } else {
+            Column(modifier = Modifier.fillMaxSize()) {
+                Box(modifier = Modifier.weight(1f)) {
+                    when (currentTab) {
+                        0 -> HomeScreen(
+                            isPro = isProUser,
+                            onMediaSelected = { uri ->
+                                selectedMediaUri = uri
+                                currentScreen = "editor"
+                            },
+                            onOpenPaywall = { showPaywall = true }
+                        )
+                        1 -> TemplatesScreen(
+                            onTemplateSelected = {
+                                selectedMediaUri = null
+                                currentScreen = "editor"
+                            }
+                        )
+                        2 -> AiLabScreen(
+                            isPro = isProUser,
+                            onOpenPaywall = { showPaywall = true }
+                        )
+                        3 -> LibraryScreen(
+                            onMediaSelected = { uri ->
+                                selectedMediaUri = uri
+                                currentScreen = "editor"
+                            }
+                        )
+                        4 -> ProfileScreen(
+                            userName = loggedUser,
+                            isPro = isProUser,
+                            onOpenPaywall = { showPaywall = true },
+                            onOpenSettings = { showSettings = true }
+                        )
+                    }
+                }
+
+                // BARRA DE NAVEGACIÓN INFERIOR
+                NavigationBar(
+                    containerColor = Color.Transparent,
+                    tonalElevation = 0.dp
+                ) {
+                    val navItems = listOf(
+                        "Ediciones" to Icons.Default.ContentCut,
+                        "Plantillas" to Icons.Default.Layers,
+                        "Lab. de IA" to Icons.Default.AutoAwesome,
+                        "Biblioteca" to Icons.Default.Folder,
+                        "Yo" to Icons.Default.Person
+                    )
+                    navItems.forEachIndexed { index, (label, icon) ->
+                        NavigationBarItem(
+                            selected = currentTab == index,
+                            onClick = { currentTab = index },
+                            icon = { Icon(icon, null, tint = Color.Black) },
+                            label = {
+                                Text(
+                                    label,
+                                    color = Color.Black,
+                                    fontSize = 10.sp,
+                                    fontWeight = if (currentTab == index) FontWeight.Bold else FontWeight.Normal
+                                )
+                            },
+                            colors = NavigationBarItemDefaults.colors(indicatorColor = ClipCutYellowCard)
+                        )
+                    }
+                }
+            }
+        }
+
+        // VENTANA DE PAGO PRO
+        if (showPaywall) {
+            PaywallDialog(
+                onDismiss = { showPaywall = false },
+                onSubscribeSuccess = {
+                    isProUser = true
+                    showPaywall = false
+                }
+            )
+        }
+
+        // VENTANA DE AJUSTES
+        if (showSettings) {
+            SettingsDialog(
+                isPro = isProUser,
+                onDismiss = { showSettings = false },
+                onLogout = {
+                    isLoggedIn = false
+                    showSettings = false
+                }
+            )
+        }
+    }
+}
+
+// ----------------- PANTALLA 1: INICIO DE SESIÓN (LOGIN) -----------------
+@Composable
+fun LoginScreen(onLoginSuccess: (String) -> Unit) {
+    val context = LocalContext.current
+    var showImeiDialog by remember { mutableStateOf(false) }
+    var imeiInput by remember { mutableStateOf("") }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(YellowGradient)
+            .padding(24.dp)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            // ENCABEZADO Y LOGO "C ClipCut"
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                Text(
+                    "Ayuda",
+                    color = Color.Black.copy(0.7f),
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.clickable {
+                        Toast.makeText(context, "Soporte ClipCut", Toast.LENGTH_SHORT).show()
+                    }
                 )
-                "editor" -> EditorScreen(
-                    onBack = { currentScreen = "home" },
-                    onExport = { showPaywall = true }
+            }
+
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    "C",
+                    fontSize = 110.sp,
+                    fontWeight = FontWeight.Black,
+                    color = Color.Black
+                )
+                Text(
+                    "ClipCut",
+                    fontSize = 36.sp,
+                    fontWeight = FontWeight.Black,
+                    color = Color.Black
+                )
+            }
+
+            // BOTONES DE INICIO DE SESIÓN
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                SocialLoginBtn("Iniciar sesión con TikTok", Color.Black, Color.White, Icons.Default.PlayCircle) {
+                    onLoginSuccess("TikTok_User85")
+                }
+                SocialLoginBtn("Regístrate con Google", Color.White, Color.Black, Icons.Default.Email) {
+                    onLoginSuccess("Google_User@gmail.com")
+                }
+                SocialLoginBtn("Iniciar sesión con Correo / IMEI", Color.White.copy(0.85f), Color.Black, Icons.Default.PhoneAndroid) {
+                    showImeiDialog = true
+                }
+                SocialLoginBtn("Iniciar sesión con Facebook", Color.White, Color(0xFF1877F2), Icons.Default.AccountCircle) {
+                    onLoginSuccess("Facebook_User")
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(
+                    "Leí y acepté los Términos del Servicio y la Política de Privacidad de ClipCut",
+                    textAlign = TextAlign.Center,
+                    fontSize = 11.sp,
+                    color = Color.Black.copy(0.75f),
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         }
 
-        if (showPaywall) {
-            PaywallDialog(onDismiss = { showPaywall = false })
+        // DIÁLOGO PARA INGRESAR CORREO O IMEI
+        if (showImeiDialog) {
+            AlertDialog(
+                onDismissRequest = { showImeiDialog = false },
+                title = { Text("Ingresar con IMEI o Correo", fontWeight = FontWeight.Bold) },
+                text = {
+                    OutlinedTextField(
+                        value = imeiInput,
+                        onValueChange = { imeiInput = it },
+                        placeholder = { Text("Número IMEI o correo...") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                },
+                confirmButton = {
+                    Button(
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
+                        onClick = {
+                            if (imeiInput.isNotBlank()) {
+                                onLoginSuccess("ID_$imeiInput")
+                                showImeiDialog = false
+                            } else {
+                                Toast.makeText(context, "Ingresa un dato válido", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    ) {
+                        Text("Acceder", color = ClipCutYellowCard)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showImeiDialog = false }) { Text("Cancelar", color = Color.Black) }
+                }
+            )
         }
     }
 }
 
 @Composable
-fun HomeScreen(onNewProject: () -> Unit, onOpenPaywall: () -> Unit) {
+fun SocialLoginBtn(text: String, bgColor: Color, textColor: Color, icon: ImageVector, onClick: () -> Unit) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(50.dp)
+            .clickable { onClick() },
+        color = bgColor,
+        shape = RoundedCornerShape(25.dp),
+        shadowElevation = 2.dp
+    ) {
+        Row(
+            modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Icon(icon, null, tint = textColor, modifier = Modifier.size(22.dp))
+            Spacer(modifier = Modifier.width(10.dp))
+            Text(text, color = textColor, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+        }
+    }
+}
+
+// ----------------- PANTALLA 2: EDICIONES (HERRAMIENTAS Y GALERÍA) -----------------
+@Composable
+fun HomeScreen(isPro: Boolean, onMediaSelected: (Uri?) -> Unit, onOpenPaywall: () -> Unit) {
     val context = LocalContext.current
-    var selectedTab by remember { mutableStateOf(0) }
+
+    // Selector que abre la galería de fotos y videos del celular
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            onMediaSelected(uri)
+        }
+    }
 
     val tools = listOf(
         Pair("AutoCut", Icons.Default.PlayCircle),
@@ -93,11 +348,11 @@ fun HomeScreen(onNewProject: () -> Unit, onOpenPaywall: () -> Unit) {
         Pair("Herramientas mkt", Icons.Default.ShoppingBag),
         Pair("Herramientas audio", Icons.Default.VolumeUp),
         Pair("Avatares", Icons.Default.AccountCircle),
-        Pair("Multimedia", Icons.Default.Folder),
+        Pair("Genera multimedia", Icons.Default.Folder),
         Pair("Todas (34)", Icons.Default.Apps)
     )
 
-    Column(modifier = Modifier.fillMaxSize().background(ClipCutYellow)) {
+    Column(modifier = Modifier.fillMaxSize()) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -106,38 +361,44 @@ fun HomeScreen(onNewProject: () -> Unit, onOpenPaywall: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Surface(
-                color = Color.White.copy(alpha = 0.85f),
+                color = if (isPro) Color.Black else Color.White.copy(0.85f),
                 shape = RoundedCornerShape(20.dp),
                 modifier = Modifier.clickable { onOpenPaywall() }
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("💎 Prueba Standard 7 días por $0", fontSize = 12.sp, color = Color.Black, fontWeight = FontWeight.Bold)
+                    Text(
+                        if (isPro) "👑 CLIPCUT PRO ACTIVO" else "💎 Prueba Standard 7 días por $0",
+                        fontSize = 12.sp,
+                        color = if (isPro) ClipCutYellowCard else Color.Black,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
-            IconButton(onClick = {}) {
-                Icon(Icons.Default.Search, contentDescription = null, tint = Color.Black)
+            IconButton(onClick = { Toast.makeText(context, "Buscador de efectos", Toast.LENGTH_SHORT).show() }) {
+                Icon(Icons.Default.Search, null, tint = Color.Black)
             }
         }
 
-        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-            Text("Video create", fontSize = 14.sp, color = Color.Black.copy(0.7f), fontWeight = FontWeight.Medium)
-            Text("Get started ›", fontSize = 26.sp, color = Color.Black, fontWeight = FontWeight.Black)
+        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
+            Text("Video create", fontSize = 13.sp, color = Color.Black.copy(0.75f), fontWeight = FontWeight.Medium)
+            Text("Get started ›", fontSize = 28.sp, color = Color.Black, fontWeight = FontWeight.Black)
         }
 
+        // BOTONES DE ACCESO A GALERÍA
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+                .padding(horizontal = 16.dp, vertical = 10.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Card(
                 modifier = Modifier
                     .weight(1f)
-                    .height(90.dp)
-                    .clickable { onNewProject() },
+                    .height(95.dp)
+                    .clickable { galleryLauncher.launch("video/*") },
                 colors = CardDefaults.cardColors(containerColor = ClipCutYellowCard),
                 shape = RoundedCornerShape(16.dp)
             ) {
@@ -154,8 +415,8 @@ fun HomeScreen(onNewProject: () -> Unit, onOpenPaywall: () -> Unit) {
             Card(
                 modifier = Modifier
                     .weight(1f)
-                    .height(90.dp)
-                    .clickable { Toast.makeText(context, "Editor de fotos", Toast.LENGTH_SHORT).show() },
+                    .height(95.dp)
+                    .clickable { galleryLauncher.launch("image/*") },
                 colors = CardDefaults.cardColors(containerColor = ClipCutYellowCard),
                 shape = RoundedCornerShape(16.dp)
             ) {
@@ -170,22 +431,20 @@ fun HomeScreen(onNewProject: () -> Unit, onOpenPaywall: () -> Unit) {
             }
         }
 
+        // HERRAMIENTAS
         LazyVerticalGrid(
             columns = GridCells.Fixed(3),
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp),
-            contentPadding = PaddingValues(vertical = 12.dp)
+            modifier = Modifier.weight(1f).fillMaxWidth().padding(horizontal = 8.dp),
+            contentPadding = PaddingValues(vertical = 6.dp)
         ) {
             items(tools) { (title, icon) ->
                 Column(
                     modifier = Modifier
                         .padding(8.dp)
-                        .clickable { Toast.makeText(context, title, Toast.LENGTH_SHORT).show() },
+                        .clickable { galleryLauncher.launch("*/*") },
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Icon(icon, null, tint = Color.Black, modifier = Modifier.size(32.dp))
+                    Icon(icon, null, tint = Color.Black, modifier = Modifier.size(30.dp))
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         title,
@@ -198,258 +457,35 @@ fun HomeScreen(onNewProject: () -> Unit, onOpenPaywall: () -> Unit) {
                 }
             }
         }
-
-        NavigationBar(
-            containerColor = ClipCutYellow,
-            tonalElevation = 0.dp
-        ) {
-            val navItems = listOf(
-                "Ediciones" to Icons.Default.ContentCut,
-                "Plantillas" to Icons.Default.Layers,
-                "Lab. de IA" to Icons.Default.AutoAwesome,
-                "Biblioteca" to Icons.Default.Folder,
-                "Yo" to Icons.Default.Person
-            )
-            navItems.forEachIndexed { index, (label, icon) ->
-                NavigationBarItem(
-                    selected = selectedTab == index,
-                    onClick = { selectedTab = index },
-                    icon = { Icon(icon, null, tint = Color.Black) },
-                    label = { Text(label, color = Color.Black, fontSize = 10.sp, fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal) },
-                    colors = NavigationBarItemDefaults.colors(indicatorColor = ClipCutYellowCard)
-                )
-            }
-        }
     }
 }
 
+// ----------------- PANTALLA 3: PLANTILLAS -----------------
 @Composable
-fun EditorScreen(onBack: () -> Unit, onExport: () -> Unit) {
-    var isPlaying by remember { mutableStateOf(false) }
+fun TemplatesScreen(onTemplateSelected: () -> Unit) {
+    val templates = listOf(
+        "Velocidad Automática & Zoom 3D" to "Estilo Viral TikTok",
+        "Efecto Neón Cyberpunk" to "Especial 4K",
+        "Recorte Profesional & Chroma" to "Fondo Verde IA",
+        "Transición Rápida Beats" to "Sincronización Audio",
+        "Filtro Retro VHS 90s" to "Nostalgia Vibes"
+    )
 
-    Column(modifier = Modifier.fillMaxSize().background(Color.Black)) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(ClipCutYellow)
-                .padding(horizontal = 16.dp, vertical = 10.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = onBack) { Icon(Icons.Default.Close, null, tint = Color.Black) }
-            Text("ClipCut Studio", color = Color.Black, fontWeight = FontWeight.Black, fontSize = 16.sp)
-            Button(
-                onClick = onExport,
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
-                shape = RoundedCornerShape(20.dp)
-            ) {
-                Text("Exportar", color = ClipCutYellow, fontWeight = FontWeight.Bold)
-            }
-        }
+    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        Text("Plantillas Populares", fontSize = 24.sp, fontWeight = FontWeight.Black, color = Color.Black)
+        Text("Crea videos en un toque con estilos listos", fontSize = 13.sp, color = Color.Black.copy(0.7f))
+        Spacer(modifier = Modifier.height(14.dp))
 
-        Box(
-            modifier = Modifier.fillMaxWidth().weight(0.5f).background(Color.Black),
-            contentAlignment = Alignment.Center
-        ) {
-            Text("Previsualización 4K UHD", color = Color.DarkGray)
-            IconButton(
-                onClick = { isPlaying = !isPlaying },
-                modifier = Modifier
-                    .size(54.dp)
-                    .clip(CircleShape)
-                    .background(Color.Black.copy(0.7f))
-                    .border(2.dp, ClipCutYellow, CircleShape)
-            ) {
-                Icon(if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow, null, tint = ClipCutYellow, modifier = Modifier.size(32.dp))
-            }
-        }
-
-        Column(modifier = Modifier.fillMaxWidth().weight(0.35f).background(Color(0xFF141414)).padding(10.dp)) {
-            TrackBar("Video 4K", ClipCutYellow)
-            Spacer(modifier = Modifier.height(6.dp))
-            TrackBar("Audio / Voz", Color(0xFF00E5FF))
-            Spacer(modifier = Modifier.height(6.dp))
-            TrackBar("Subtítulos IA", Color(0xFFFF007A))
-        }
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(72.dp)
-                .background(Color(0xFF1C1C1E))
-                .border(1.dp, ClipCutYellow.copy(0.2f))
-                .horizontalScroll(rememberScrollState()),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(18.dp)
-        ) {
-            Spacer(modifier = Modifier.width(10.dp))
-            ToolBtn("Dividir", Icons.Default.ContentCut)
-            ToolBtn("Velocidad", Icons.Default.Speed)
-            ToolBtn("IA Fix", Icons.Default.AutoFixHigh)
-            ToolBtn("Chroma", Icons.Default.ColorLens)
-            ToolBtn("LUTs", Icons.Default.FilterVintage)
-            Spacer(modifier = Modifier.width(10.dp))
-        }
-    }
-}
-
-@Composable
-fun TrackBar(label: String, color: Color) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(34.dp)
-            .clip(RoundedCornerShape(8.dp))
-            .background(color.copy(0.25f))
-            .border(1.5.dp, color, RoundedCornerShape(8.dp))
-            .padding(horizontal = 12.dp),
-        contentAlignment = Alignment.CenterStart
-    ) {
-        Text(label, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-    }
-}
-
-@Composable
-fun ToolBtn(title: String, icon: ImageVector) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.clickable { }
-    ) {
-        Icon(icon, null, tint = ClipCutYellow, modifier = Modifier.size(24.dp))
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(title, color = Color.White, fontSize = 11.sp)
-    }
-}
-
-@Composable
-fun PaywallDialog(onDismiss: () -> Unit) {
-    var selectedPlan by remember { mutableStateOf("anual") }
-
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(DarkPaywallBg)
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(20.dp)
-            ) {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Close, null, tint = Color.White)
-                    }
-                }
-
-                Surface(
-                    color = ClipCutYellow,
-                    shape = RoundedCornerShape(6.dp)
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            items(templates.size) { i ->
+                val (title, subtitle) = templates[i]
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp)
+                        .clickable { onTemplateSelected() },
+                    colors = CardDefaults.cardColors(containerColor = ClipCutYellowCard),
+                    shape = RoundedCornerShape(16.dp)
                 ) {
-                    Text(
-                        " CLIPCUT PRO ",
-                        color = Color.Black,
-                        fontWeight = FontWeight.Black,
-                        fontSize = 11.sp,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    "Desbloquea Todo el Potencial de Edición",
-                    color = Color.White,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    "Sin marcas de agua, exportación en 4K Ultra HD a 60 FPS, subtítulos ilimitados con IA y biblioteca completa.",
-                    color = Color.Gray,
-                    fontSize = 12.sp,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                PlanCard(
-                    title = "Prueba de 7 Días",
-                    price = "$20 MXN",
-                    desc = "por 7 días",
-                    isSelected = selectedPlan == "prueba",
-                    onClick = { selectedPlan = "prueba" }
-                )
-                Spacer(modifier = Modifier.height(10.dp))
-                PlanCard(
-                    title = "Plan Mensual Pro",
-                    price = "$100 MXN",
-                    desc = "al mes",
-                    isSelected = selectedPlan == "mensual",
-                    onClick = { selectedPlan = "mensual" }
-                )
-                Spacer(modifier = Modifier.height(10.dp))
-                PlanCard(
-                    title = "Plan Anual Premium",
-                    price = "$1,000 MXN",
-                    desc = "al año (Ahorra 17%)",
-                    badge = "MÁS POPULAR",
-                    isSelected = selectedPlan == "anual",
-                    onClick = { selectedPlan = "anual" }
-                )
-
-                Spacer(modifier = Modifier.weight(1f))
-
-                Button(
-                    onClick = onDismiss,
-                    colors = ButtonDefaults.buttonColors(containerColor = ClipCutYellow),
-                    shape = RoundedCornerShape(25.dp),
-                    modifier = Modifier.fillMaxWidth().height(52.dp)
-                ) {
-                    Icon(Icons.Default.Bolt, null, tint = Color.Black)
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("Suscribirse con Google Play", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun PlanCard(title: String, price: String, desc: String, badge: String? = null, isSelected: Boolean, onClick: () -> Unit) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() }
-            .border(
-                width = if (isSelected) 2.dp else 1.dp,
-                color = if (isSelected) ClipCutYellow else Color.DarkGray,
-                shape = RoundedCornerShape(14.dp)
-            ),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = DarkCardBg)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            if (badge != null) {
-                Surface(color = ClipCutYellow, shape = RoundedCornerShape(4.dp)) {
-                    Text(" $badge ", color = Color.Black, fontSize = 9.sp, fontWeight = FontWeight.Bold)
-                }
-                Spacer(modifier = Modifier.height(4.dp))
-            }
-            Text(title, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(price, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black)
-                RadioButton(
-                    selected = isSelected,
-                    onClick = onClick,
-                    colors = RadioButtonDefaults.colors(selectedColor = ClipCutYellow, unselectedColor = Color.Gray)
-                )
-            }
-            Text(desc, color = Color.Gray, fontSize = 11.sp)
-        }
-    }
-}
+                    Row(
+                        modifier = Mo
