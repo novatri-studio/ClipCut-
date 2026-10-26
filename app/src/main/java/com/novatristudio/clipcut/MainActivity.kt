@@ -131,7 +131,7 @@ fun QuickBox(title: String, icon: ImageVector, modifier: Modifier, onClick: () -
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterVertically,
+            horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
             Icon(icon, null, tint = ClipCutYellow, modifier = Modifier.size(24.dp))
@@ -212,7 +212,7 @@ fun TrackBar(label: String, color: Color) {
 
 @Composable
 fun ToolBtn(title: String, icon: ImageVector) {
-    Column(horizontalAlignment = Alignment.CenterVertically) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Icon(icon, null, tint = Color.White, modifier = Modifier.size(20.dp))
         Text(title, color = Color.LightGray, fontSize = 10.sp)
     }
@@ -261,7 +261,8 @@ fun PlanRow(title: String, price: String) {
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(14.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Text(title, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp)
             Text(price, color = ClipCutYellow, fontWeight = FontWeight.Black, fontSize = 13.sp)
