@@ -38,13 +38,15 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 
-// COLORES OFICIALES CLIPCUT
 val YellowGradient = Brush.verticalGradient(
     colors = listOf(Color(0xFFC79500), Color(0xFFE5B000), Color(0xFFF7C815))
 )
 val ClipCutYellowCard = Color(0xFFFFD53D)
 val DarkPaywallBg = Color(0xFF141414)
 val DarkCardBg = Color(0xFF1E1E1E)
+
+data class NavItem(val label: String, val icon: ImageVector)
+data class ToolItem(val title: String, val icon: ImageVector)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -61,13 +63,20 @@ fun ClipCutApp() {
     var loggedUser by remember { mutableStateOf("Usuario ClipCut") }
     var isProUser by remember { mutableStateOf(false) }
 
-    var currentScreen by remember { mutableStateOf("home") } // "home" o "editor"
+    var currentScreen by remember { mutableStateOf("home") }
     var currentTab by remember { mutableStateOf(0) }
     var showPaywall by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
     var selectedMediaUri by remember { mutableStateOf<Uri?>(null) }
 
-    // SI NO HA INICIADO SESIÓN -> PANTALLA DE LOGIN
+    val navItems = listOf(
+        NavItem("Ediciones", Icons.Default.ContentCut),
+        NavItem("Plantillas", Icons.Default.Layers),
+        NavItem("Lab. de IA", Icons.Default.AutoAwesome),
+        NavItem("Biblioteca", Icons.Default.Folder),
+        NavItem("Yo", Icons.Default.Person)
+    )
+
     if (!isLoggedIn) {
         LoginScreen(
             onLoginSuccess = { user ->
@@ -78,7 +87,6 @@ fun ClipCutApp() {
         return
     }
 
-    // SI YA INICIÓ SESIÓN -> APP COMPLETA
     Box(modifier = Modifier.fillMaxSize().background(YellowGradient)) {
         if (currentScreen == "editor") {
             EditorScreen(
@@ -126,26 +134,18 @@ fun ClipCutApp() {
                     }
                 }
 
-                // BARRA DE NAVEGACIÓN INFERIOR
                 NavigationBar(
                     containerColor = Color.Transparent,
                     tonalElevation = 0.dp
                 ) {
-                    val navItems = listOf(
-                        "Ediciones" to Icons.Default.ContentCut,
-                        "Plantillas" to Icons.Default.Layers,
-                        "Lab. de IA" to Icons.Default.AutoAwesome,
-                        "Biblioteca" to Icons.Default.Folder,
-                        "Yo" to Icons.Default.Person
-                    )
-                    navItems.forEachIndexed { index, (label, icon) ->
+                    navItems.forEachIndexed { index, item ->
                         NavigationBarItem(
                             selected = currentTab == index,
                             onClick = { currentTab = index },
-                            icon = { Icon(icon, null, tint = Color.Black) },
+                            icon = { Icon(item.icon, contentDescription = null, tint = Color.Black) },
                             label = {
                                 Text(
-                                    label,
+                                    item.label,
                                     color = Color.Black,
                                     fontSize = 10.sp,
                                     fontWeight = if (currentTab == index) FontWeight.Bold else FontWeight.Normal
@@ -158,7 +158,6 @@ fun ClipCutApp() {
             }
         }
 
-        // VENTANA DE PAGO PRO
         if (showPaywall) {
             PaywallDialog(
                 onDismiss = { showPaywall = false },
@@ -169,7 +168,6 @@ fun ClipCutApp() {
             )
         }
 
-        // VENTANA DE AJUSTES
         if (showSettings) {
             SettingsDialog(
                 isPro = isProUser,
@@ -183,7 +181,7 @@ fun ClipCutApp() {
     }
 }
 
-// ----------------- PANTALLA 1: INICIO DE SESIÓN (LOGIN) -----------------
+// ----------------- PANTALLA 1: LOGIN -----------------
 @Composable
 fun LoginScreen(onLoginSuccess: (String) -> Unit) {
     val context = LocalContext.current
@@ -201,7 +199,6 @@ fun LoginScreen(onLoginSuccess: (String) -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // ENCABEZADO Y LOGO "C ClipCut"
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 Text(
                     "Ayuda",
@@ -214,21 +211,10 @@ fun LoginScreen(onLoginSuccess: (String) -> Unit) {
             }
 
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    "C",
-                    fontSize = 110.sp,
-                    fontWeight = FontWeight.Black,
-                    color = Color.Black
-                )
-                Text(
-                    "ClipCut",
-                    fontSize = 36.sp,
-                    fontWeight = FontWeight.Black,
-                    color = Color.Black
-                )
+                Text("C", fontSize = 110.sp, fontWeight = FontWeight.Black, color = Color.Black)
+                Text("ClipCut", fontSize = 36.sp, fontWeight = FontWeight.Black, color = Color.Black)
             }
 
-            // BOTONES DE INICIO DE SESIÓN
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -257,7 +243,6 @@ fun LoginScreen(onLoginSuccess: (String) -> Unit) {
             }
         }
 
-        // DIÁLOGO PARA INGRESAR CORREO O IMEI
         if (showImeiDialog) {
             AlertDialog(
                 onDismissRequest = { showImeiDialog = false },
@@ -310,19 +295,18 @@ fun SocialLoginBtn(text: String, bgColor: Color, textColor: Color, icon: ImageVe
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
-            Icon(icon, null, tint = textColor, modifier = Modifier.size(22.dp))
+            Icon(icon, contentDescription = null, tint = textColor, modifier = Modifier.size(22.dp))
             Spacer(modifier = Modifier.width(10.dp))
             Text(text, color = textColor, fontWeight = FontWeight.Bold, fontSize = 13.sp)
         }
     }
 }
 
-// ----------------- PANTALLA 2: EDICIONES (HERRAMIENTAS Y GALERÍA) -----------------
+// ----------------- PANTALLA 2: EDICIONES -----------------
 @Composable
 fun HomeScreen(isPro: Boolean, onMediaSelected: (Uri?) -> Unit, onOpenPaywall: () -> Unit) {
     val context = LocalContext.current
 
-    // Selector que abre la galería de fotos y videos del celular
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -332,24 +316,24 @@ fun HomeScreen(isPro: Boolean, onMediaSelected: (Uri?) -> Unit, onOpenPaywall: (
     }
 
     val tools = listOf(
-        Pair("AutoCut", Icons.Default.PlayCircle),
-        Pair("Retoque", Icons.Default.Face),
-        Pair("Generador IA", Icons.Default.AutoAwesome),
-        Pair("Herramientas foto", Icons.Default.Image),
-        Pair("Disparar y grabar", Icons.Default.Videocam),
-        Pair("Mejorar auto", Icons.Default.AutoFixHigh),
-        Pair("Creador portadas", Icons.Default.Edit),
-        Pair("Subtítulos auto", Icons.Default.ClosedCaption),
-        Pair("Recortadora IA", Icons.Default.ContentCut),
-        Pair("Eliminar fondo", Icons.Default.Person),
-        Pair("Editor fotos IA", Icons.Default.PhotoFilter),
-        Pair("Espacio", Icons.Default.Cloud),
-        Pair("Ajustar velocidad", Icons.Default.Speed),
-        Pair("Herramientas mkt", Icons.Default.ShoppingBag),
-        Pair("Herramientas audio", Icons.Default.VolumeUp),
-        Pair("Avatares", Icons.Default.AccountCircle),
-        Pair("Genera multimedia", Icons.Default.Folder),
-        Pair("Todas (34)", Icons.Default.Apps)
+        ToolItem("AutoCut", Icons.Default.PlayCircle),
+        ToolItem("Retoque", Icons.Default.Face),
+        ToolItem("Generador IA", Icons.Default.AutoAwesome),
+        ToolItem("Herramientas foto", Icons.Default.Image),
+        ToolItem("Disparar y grabar", Icons.Default.Videocam),
+        ToolItem("Mejorar auto", Icons.Default.AutoFixHigh),
+        ToolItem("Creador portadas", Icons.Default.Edit),
+        ToolItem("Subtítulos auto", Icons.Default.ClosedCaption),
+        ToolItem("Recortadora IA", Icons.Default.ContentCut),
+        ToolItem("Eliminar fondo", Icons.Default.Person),
+        ToolItem("Editor fotos IA", Icons.Default.PhotoFilter),
+        ToolItem("Espacio", Icons.Default.Cloud),
+        ToolItem("Ajustar velocidad", Icons.Default.Speed),
+        ToolItem("Herramientas mkt", Icons.Default.ShoppingBag),
+        ToolItem("Herramientas audio", Icons.Default.VolumeUp),
+        ToolItem("Avatares", Icons.Default.AccountCircle),
+        ToolItem("Genera multimedia", Icons.Default.Folder),
+        ToolItem("Todas (34)", Icons.Default.Apps)
     )
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -378,7 +362,7 @@ fun HomeScreen(isPro: Boolean, onMediaSelected: (Uri?) -> Unit, onOpenPaywall: (
                 }
             }
             IconButton(onClick = { Toast.makeText(context, "Buscador de efectos", Toast.LENGTH_SHORT).show() }) {
-                Icon(Icons.Default.Search, null, tint = Color.Black)
+                Icon(Icons.Default.Search, contentDescription = null, tint = Color.Black)
             }
         }
 
@@ -387,7 +371,6 @@ fun HomeScreen(isPro: Boolean, onMediaSelected: (Uri?) -> Unit, onOpenPaywall: (
             Text("Get started ›", fontSize = 28.sp, color = Color.Black, fontWeight = FontWeight.Black)
         }
 
-        // BOTONES DE ACCESO A GALERÍA
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -407,7 +390,7 @@ fun HomeScreen(isPro: Boolean, onMediaSelected: (Uri?) -> Unit, onOpenPaywall: (
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Icon(Icons.Default.Add, null, tint = Color.Black, modifier = Modifier.size(28.dp))
+                    Icon(Icons.Default.Add, contentDescription = null, tint = Color.Black, modifier = Modifier.size(28.dp))
                     Text("Video nuevo", fontWeight = FontWeight.Bold, color = Color.Black, fontSize = 14.sp)
                 }
             }
@@ -425,29 +408,28 @@ fun HomeScreen(isPro: Boolean, onMediaSelected: (Uri?) -> Unit, onOpenPaywall: (
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Icon(Icons.Default.Image, null, tint = Color.Black, modifier = Modifier.size(28.dp))
+                    Icon(Icons.Default.Image, contentDescription = null, tint = Color.Black, modifier = Modifier.size(28.dp))
                     Text("Editar foto", fontWeight = FontWeight.Bold, color = Color.Black, fontSize = 14.sp)
                 }
             }
         }
 
-        // HERRAMIENTAS
         LazyVerticalGrid(
             columns = GridCells.Fixed(3),
             modifier = Modifier.weight(1f).fillMaxWidth().padding(horizontal = 8.dp),
             contentPadding = PaddingValues(vertical = 6.dp)
         ) {
-            items(tools) { (title, icon) ->
+            items(tools) { tool ->
                 Column(
                     modifier = Modifier
                         .padding(8.dp)
                         .clickable { galleryLauncher.launch("*/*") },
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Icon(icon, null, tint = Color.Black, modifier = Modifier.size(30.dp))
+                    Icon(tool.icon, contentDescription = null, tint = Color.Black, modifier = Modifier.size(30.dp))
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        title,
+                        tool.title,
                         fontSize = 11.sp,
                         color = Color.Black,
                         fontWeight = FontWeight.Medium,
@@ -478,7 +460,7 @@ fun TemplatesScreen(onTemplateSelected: () -> Unit) {
 
         LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             items(templates.size) { i ->
-                val (title, subtitle) = templates[i]
+                val item = templates[i]
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -488,4 +470,12 @@ fun TemplatesScreen(onTemplateSelected: () -> Unit) {
                     shape = RoundedCornerShape(16.dp)
                 ) {
                     Row(
-                        modifier = Mo
+                        modifier = Modifier.fillMaxSize().padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column {
+                            Surface(color = Color.Black, shape = RoundedCornerShape(4.dp)) {
+                                Text(" POPULAR ", color = ClipCutYellowCard, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                            }
+                            Spacer(mod
