@@ -45,9 +45,6 @@ val ClipCutYellowCard = Color(0xFFFFD53D)
 val DarkPaywallBg = Color(0xFF141414)
 val DarkCardBg = Color(0xFF1E1E1E)
 
-data class NavItem(val label: String, val icon: ImageVector)
-data class ToolItem(val title: String, val icon: ImageVector)
-
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -69,12 +66,13 @@ fun ClipCutApp() {
     var showSettings by remember { mutableStateOf(false) }
     var selectedMediaUri by remember { mutableStateOf<Uri?>(null) }
 
-    val navItems = listOf(
-        NavItem("Ediciones", Icons.Default.ContentCut),
-        NavItem("Plantillas", Icons.Default.Layers),
-        NavItem("Lab. de IA", Icons.Default.AutoAwesome),
-        NavItem("Biblioteca", Icons.Default.Folder),
-        NavItem("Yo", Icons.Default.Person)
+    val tabTitles = listOf("Ediciones", "Plantillas", "Lab. de IA", "Biblioteca", "Yo")
+    val tabIcons = listOf(
+        Icons.Default.ContentCut,
+        Icons.Default.Layers,
+        Icons.Default.AutoAwesome,
+        Icons.Default.Folder,
+        Icons.Default.Person
     )
 
     if (!isLoggedIn) {
@@ -134,21 +132,22 @@ fun ClipCutApp() {
                     }
                 }
 
+                // BARRA INFERIOR SEGURA
                 NavigationBar(
                     containerColor = Color.Transparent,
                     tonalElevation = 0.dp
                 ) {
-                    navItems.forEachIndexed { index, item ->
+                    for (i in 0 until 5) {
                         NavigationBarItem(
-                            selected = currentTab == index,
-                            onClick = { currentTab = index },
-                            icon = { Icon(item.icon, contentDescription = null, tint = Color.Black) },
+                            selected = currentTab == i,
+                            onClick = { currentTab = i },
+                            icon = { Icon(tabIcons[i], contentDescription = null, tint = Color.Black) },
                             label = {
                                 Text(
-                                    item.label,
+                                    tabTitles[i],
                                     color = Color.Black,
                                     fontSize = 10.sp,
-                                    fontWeight = if (currentTab == index) FontWeight.Bold else FontWeight.Normal
+                                    fontWeight = if (currentTab == i) FontWeight.Bold else FontWeight.Normal
                                 )
                             },
                             colors = NavigationBarItemDefaults.colors(indicatorColor = ClipCutYellowCard)
@@ -315,25 +314,19 @@ fun HomeScreen(isPro: Boolean, onMediaSelected: (Uri?) -> Unit, onOpenPaywall: (
         }
     }
 
-    val tools = listOf(
-        ToolItem("AutoCut", Icons.Default.PlayCircle),
-        ToolItem("Retoque", Icons.Default.Face),
-        ToolItem("Generador IA", Icons.Default.AutoAwesome),
-        ToolItem("Herramientas foto", Icons.Default.Image),
-        ToolItem("Disparar y grabar", Icons.Default.Videocam),
-        ToolItem("Mejorar auto", Icons.Default.AutoFixHigh),
-        ToolItem("Creador portadas", Icons.Default.Edit),
-        ToolItem("Subtítulos auto", Icons.Default.ClosedCaption),
-        ToolItem("Recortadora IA", Icons.Default.ContentCut),
-        ToolItem("Eliminar fondo", Icons.Default.Person),
-        ToolItem("Editor fotos IA", Icons.Default.PhotoFilter),
-        ToolItem("Espacio", Icons.Default.Cloud),
-        ToolItem("Ajustar velocidad", Icons.Default.Speed),
-        ToolItem("Herramientas mkt", Icons.Default.ShoppingBag),
-        ToolItem("Herramientas audio", Icons.Default.VolumeUp),
-        ToolItem("Avatares", Icons.Default.AccountCircle),
-        ToolItem("Genera multimedia", Icons.Default.Folder),
-        ToolItem("Todas (34)", Icons.Default.Apps)
+    val toolTitles = listOf(
+        "AutoCut", "Retoque", "Generador IA", "Herramientas foto",
+        "Disparar y grabar", "Mejorar auto", "Creador portadas", "Subtítulos auto",
+        "Recortadora IA", "Eliminar fondo", "Editor fotos IA", "Espacio",
+        "Ajustar velocidad", "Herramientas mkt", "Herramientas audio", "Avatares",
+        "Genera multimedia", "Todas (34)"
+    )
+    val toolIcons = listOf(
+        Icons.Default.PlayCircle, Icons.Default.Face, Icons.Default.AutoAwesome, Icons.Default.Image,
+        Icons.Default.Videocam, Icons.Default.AutoFixHigh, Icons.Default.Edit, Icons.Default.ClosedCaption,
+        Icons.Default.ContentCut, Icons.Default.Person, Icons.Default.PhotoFilter, Icons.Default.Cloud,
+        Icons.Default.Speed, Icons.Default.ShoppingBag, Icons.Default.VolumeUp, Icons.Default.AccountCircle,
+        Icons.Default.Folder, Icons.Default.Apps
     )
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -419,17 +412,17 @@ fun HomeScreen(isPro: Boolean, onMediaSelected: (Uri?) -> Unit, onOpenPaywall: (
             modifier = Modifier.weight(1f).fillMaxWidth().padding(horizontal = 8.dp),
             contentPadding = PaddingValues(vertical = 6.dp)
         ) {
-            items(tools) { tool ->
+            items(18) { index ->
                 Column(
                     modifier = Modifier
                         .padding(8.dp)
                         .clickable { galleryLauncher.launch("*/*") },
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Icon(tool.icon, contentDescription = null, tint = Color.Black, modifier = Modifier.size(30.dp))
+                    Icon(toolIcons[index], contentDescription = null, tint = Color.Black, modifier = Modifier.size(30.dp))
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        tool.title,
+                        toolTitles[index],
                         fontSize = 11.sp,
                         color = Color.Black,
                         fontWeight = FontWeight.Medium,
@@ -478,4 +471,9 @@ fun TemplatesScreen(onTemplateSelected: () -> Unit) {
                             Surface(color = Color.Black, shape = RoundedCornerShape(4.dp)) {
                                 Text(" POPULAR ", color = ClipCutYellowCard, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                             }
-                            Spacer(mod
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(item.first, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color.Black)
+                            Text(item.second, fontSize = 12.sp, color = Color.Black.copy(0.7f))
+                        }
+                        Button(
+                      
