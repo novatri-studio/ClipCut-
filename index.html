@@ -22,6 +22,13 @@
       box-shadow: 0 0 30px rgba(0,0,0,0.5);
     }
 
+    /* EFECTO TÁCTIL PARA QUE REACCIONE AL TOCAR */
+    button:active, .action-card:active, .tool-item:active, .account-item:active, .nav-tab:active, .pill-btn:active {
+      transform: scale(0.95);
+      opacity: 0.8;
+      transition: transform 0.1s;
+    }
+
     .screen { flex: 1; display: none; flex-direction: column; overflow-y: auto; padding: 16px; padding-bottom: 80px; }
     .screen.active { display: flex; }
 
@@ -43,6 +50,7 @@
     .btn-email { background: rgba(255,255,255,0.85); color: #000; }
     .btn-fb { background: #fff; color: #1877F2; }
 
+    /* VENTANA GOOGLE */
     .google-modal-bg {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.6); z-index: 300; display: none;
@@ -57,9 +65,8 @@
     .google-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; font-size: 14px; font-weight: bold; }
     .account-item {
       display: flex; align-items: center; gap: 14px; padding: 12px; border-radius: 12px;
-      cursor: pointer; transition: background 0.2s; border-bottom: 1px solid #f1f3f4;
+      cursor: pointer; border-bottom: 1px solid #f1f3f4;
     }
-    .account-item:active { background: #f8f9fa; }
     .account-avatar {
       width: 40px; height: 40px; border-radius: 50%; background: #1a73e8; color: #fff;
       display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 18px;
@@ -92,6 +99,7 @@
     .nav-tab.active { color: #000; font-weight: 900; }
     .nav-tab i { font-size: 18px; }
 
+    /* MODAL DE PAGO (CON TUS PRECIOS EXACTOS: $20, $100, $1,000) */
     .paywall {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #141414;
       color: #fff; z-index: 200; display: none; flex-direction: column; padding: 20px; overflow-y: auto;
@@ -159,7 +167,7 @@
 
   <!-- PANTALLA LOGIN -->
   <div id="login-screen">
-    <div style="text-align: right; font-weight: bold; font-size: 14px; cursor: pointer;" onclick="skipLogin()">Omitir ›</div>
+    <div style="text-align: right; font-weight: bold; font-size: 14px; cursor: pointer; padding: 10px;" onclick="skipLogin()">Omitir ›</div>
     <div class="logo-box">
       <div class="logo-c">C</div>
       <div class="logo-name">ClipCut</div>
@@ -177,7 +185,7 @@
   <div id="tab-ediciones" class="screen active">
     <div class="top-bar">
       <div id="badge-pro" class="pill-btn" onclick="openPaywall()">💎 Prueba Standard 7 días por $0</div>
-      <i class="fa-solid fa-magnifying-glass" style="font-size: 18px; cursor: pointer;"></i>
+      <i class="fa-solid fa-magnifying-glass" style="font-size: 18px; cursor: pointer;" onclick="alert('Buscador activo')"></i>
     </div>
     <p style="font-size: 13px; opacity: 0.8;">Video create</p>
     <h2 style="font-size: 28px; font-weight: 900; margin-bottom: 10px;">Get started ›</h2>
@@ -311,22 +319,17 @@
     <div class="nav-tab" onclick="openTab('yo', this)"><i class="fa-solid fa-user"></i><span>Yo</span></div>
   </div>
 
-  <!-- MODAL PRO -->
+  <!-- MODAL DE PAGO PRO CON TUS PRECIOS -->
   <div id="paywall-modal" class="paywall">
     <div style="text-align: right; cursor: pointer;" onclick="closePaywall()"><i class="fa-solid fa-xmark" style="font-size: 22px;"></i></div>
     <span style="background: #F7C815; color: #000; font-weight: 900; font-size: 10px; padding: 3px 8px; border-radius: 4px; width: fit-content; margin-top: 10px;">CLIPCUT PRO</span>
     <h2 style="font-size: 22px; font-weight: 900; margin: 8px 0 4px;">Desbloquea Todo el Potencial de Edición</h2>
     <p style="font-size: 12px; color: #999; margin-bottom: 20px;">Sin marcas de agua, exportación en 4K Ultra HD a 60 FPS y biblioteca IA completa.</p>
 
+    <!-- PLAN 1: PRUEBA 7 DÍAS ($20 MXN) -->
     <div class="plan-card" onclick="selectPlan(this)">
       <div><h4>Prueba de 7 Días</h4><p style="font-size: 11px; color: #999;">por 7 días</p></div>
       <h3>$20 MXN</h3>
     </div>
-    <div class="plan-card" onclick="selectPlan(this)">
-      <div><h4>Plan Mensual Pro</h4><p style="font-size: 11px; color: #999;">al mes</p></div>
-      <h3>$100 MXN</h3>
-    </div>
-    <div class="plan-card selected" onclick="selectPlan(this)">
-      <div>
-        <span style="background: #F7C815; color: #000; font-size: 8px; font-weight: bold; padding: 2px 4px; border-radius: 3px;">MÁS POPULAR</span>
-        <h4>Plan An
+
+    <!-- PLAN 2: MENSUAL ($100 M
